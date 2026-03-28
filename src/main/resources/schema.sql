@@ -30,6 +30,19 @@ CREATE TABLE IF NOT EXISTS drivers (
     created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Stores maintenance records for vehicles
+-- Logged by the fleet manager to track service history and costs
+CREATE TABLE IF NOT EXISTS maintenance (
+    id          BIGINT        AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id  BIGINT        NOT NULL,
+    date        DATE          NOT NULL,
+    type        VARCHAR(100)  NOT NULL,          -- e.g. OIL_CHANGE, TIRE_ROTATION, INSPECTION
+    description TEXT,
+    cost        DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+);
+
 -- Stores trip assignments linking a driver to a vehicle
 -- Created by the fleet manager to assign a driver to a vehicle for a trip
 CREATE TABLE IF NOT EXISTS trips (
