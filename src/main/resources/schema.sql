@@ -38,7 +38,9 @@ CREATE TABLE IF NOT EXISTS trips (
     vehicle_id  BIGINT       NOT NULL,
     origin      VARCHAR(255) NOT NULL,
     destination VARCHAR(255) NOT NULL,
-    status      VARCHAR(20)  NOT NULL DEFAULT 'SCHEDULED', -- SCHEDULED, IN_PROGRESS, COMPLETED
+    status      VARCHAR(20)  NOT NULL DEFAULT 'SCHEDULED', -- SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+    start_time  TIMESTAMP    NULL,
+    end_time    TIMESTAMP    NULL,
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     -- If driver or vehicle is deleted, the trip record is also removed
     FOREIGN KEY (driver_id)  REFERENCES drivers(id) ON DELETE CASCADE,

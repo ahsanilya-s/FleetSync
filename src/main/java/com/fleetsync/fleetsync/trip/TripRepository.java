@@ -3,7 +3,10 @@ package com.fleetsync.fleetsync.trip;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 // Handles all SQL operations for the trips table
 @Repository
@@ -44,18 +47,63 @@ public class TripRepository {
             .update();
     }
 
+    // Finds a single trip by its ID — used for status update validation
+    public Optional<Trip> findById(Long id) {
+        return jdbc.sql("SELECT * FROM trips WHERE id = :id")
+                   .param("id", id)
+                   .query((rs, rowNum) -> mapRow(rs))
+                   .optional();
+    }
+
+    // Updates a trip's status and sets start_time or end_time based on the transition
+    public void updateStatus(Long id, String status, LocalDateTime startTime, LocalDateTime endTime) {
+        jdbc.sql("UPDATE trips SET status = :status, start_time = COALESCE(:startTime, start_time), end_time = COALESCE(:endTime, end_time) WHERE id = :id")
+            .param("status", status)
+            .param("startTime", startTime != null ? Timestamp.valueOf(startTime) : null)
+            .param("endTime", endTime != null ? Timestamp.valueOf(endTime) : null)
+            .param("id", id)
+            .update();
+    }
+
     // Returns all trips ordered by creation date (newest first)
     public List<Trip> findAll() {
         return jdbc.sql("SELECT * FROM trips ORDER BY created_at DESC")
-                   .query((rs, rowNum) -> new Trip(
-                       rs.getLong("id"),
-                       rs.getLong("driver_id"),
-                       rs.getLong("vehicle_id"),
-                       rs.getString("origin"),
-                       rs.getString("destination"),
-                       rs.getString("status"),
-                       rs.getTimestamp("created_at").toLocalDateTime()
-                   ))
+                   .query((rs, rowNum) -> mapRow(rs))
                    .list();
+    }
+
+    // Returns trips for a specific driver ordered by creation date (newest first)
+    // Used to view trip history for a driver
+    public List<Trip> findAllByDriverId(Long driverId) {
+        return jdbc.sql("SELECT * FROM trips WHERE driver_id = :driverId ORDER BY created_at DESC")
+                   .param("driverId", driverId)
+                   .query((rs, rowNum) -> mapRow(rs))
+                   .list();
+    }
+
+    // Returns trips for a specific vehicle ordered by creation date (newest first)
+    // Used to view trip history for a vehicle
+    public List<Trip> findAllByVehicleId(Long vehicleId) {
+        return jdbc.sql("SELECT * FROM trips WHERE vehicle_id = :vehicleId ORDER BY created_at DESC")
+                   .param("vehicleId", vehicleId)
+                   .query((rs, rowNum) -> mapRow(rs))
+                   .list();
+    }
+
+    // Maps a result set row to a Trip record
+    private Trip mapRow(java.sql.ResultSet rs) throws java.sql.SQLException {
+        Timestamp startTs = rs.getTimestamp("start_time");
+        Timestamp endTs   = rs.getTimestamp("end_time");
+        return new Trip(
+            rs.getLong("id"),
+            rs.getLong("driver_id"),
+            rs.getLong("vehicle_id"),
+            rs.getString("origin"),
+            rs.getString("destination"),
+            rs.getString("status"),
+            startTs != null ? startTs.toLocalDateTime() : null,
+            endTs   != null ? endTs.toLocalDateTime()   : null,
+            rs.getTimestamp("created_at").toLocalDateTime()
+        );
     }
 }
