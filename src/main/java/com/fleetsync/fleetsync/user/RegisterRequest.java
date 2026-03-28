@@ -15,5 +15,10 @@ public record RegisterRequest(
 
     @NotBlank
     @Size(min = 8, max = 128)
-    String password
+    String password,
+
+    // Role assigned to the user on registration — defaults to DRIVER if not provided
+    // Accepted values: MANAGER, DRIVER
+    @NotBlank
+    String role
 ) {};

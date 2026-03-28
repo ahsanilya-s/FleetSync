@@ -7,5 +7,6 @@ public record User(
     String username,
     String email,
     String passwordHash,
+    String role,           // Role of the user e.g. MANAGER, DRIVER
     LocalDateTime createdAt
 ) {}
