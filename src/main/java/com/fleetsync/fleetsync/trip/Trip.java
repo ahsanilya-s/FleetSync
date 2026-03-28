@@ -10,6 +10,8 @@ public record Trip(
     Long vehicleId,        // FK → vehicles.id
     String origin,
     String destination,
-    String status,         // SCHEDULED, IN_PROGRESS, COMPLETED
+    String status,         // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+    LocalDateTime startTime,
+    LocalDateTime endTime,
     LocalDateTime createdAt
 ) {}
