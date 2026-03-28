@@ -63,6 +63,13 @@ public class VehicleRepository {
             .update();
     }
 
+    public void updateStatus(Long id, String status) {
+        jdbc.sql("UPDATE vehicles SET status = :status WHERE id = :id")
+            .param("status", status)
+            .param("id", id)
+            .update();
+    }
+
     public List<Vehicle> findAll() {
         return jdbc.sql("SELECT * FROM vehicles ORDER BY created_at DESC")
                    .query((rs, rowNum) -> new Vehicle(

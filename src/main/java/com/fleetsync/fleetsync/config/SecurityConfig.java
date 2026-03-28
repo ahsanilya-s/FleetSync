@@ -1,5 +1,6 @@
 package com.fleetsync.fleetsync.config;
 
+import org.springframework.http.HttpMethod;
 import com.fleetsync.fleetsync.user.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +34,7 @@ public class SecurityConfig {
     // and password encoder so it can validate credentials on each request
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
+        // Spring Security 6.4+: UserDetailsService is required in the constructor
         // Spring Security 7 requires UserDetailsService via constructor
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userService);
         // Tells Spring Security how to verify the submitted password against the stored hash
@@ -60,6 +62,11 @@ public class SecurityConfig {
                 // Allow anyone to register a new account without authentication
                 .requestMatchers("/api/auth/register").permitAll()
 
+                // Allow both MANAGER and DRIVER to update a trip's status
+                // (drivers mark trips as started or completed)
+                .requestMatchers(HttpMethod.PUT, "/api/trips/**/status").hasAnyRole("MANAGER", "DRIVER")
+
+                // Restrict all other vehicle, driver, and trip endpoints to MANAGER role only
                 // Restrict all vehicle, driver, trip, maintenance, and AI endpoints to MANAGER role only
                 // Any other role (e.g. DRIVER) or unauthenticated request will get 403
                 .requestMatchers("/api/vehicles/**", "/api/drivers/**", "/api/trips/**",
