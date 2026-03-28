@@ -32,6 +32,17 @@ public class VehicleController {
         repo.save(req);
     }
 
+    // PUT /api/vehicles/{id} — update vehicle details
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void update(@PathVariable Long id, @Valid @RequestBody VehicleRequest req) {
+        if (!repo.existsById(id))
+            throw new IllegalArgumentException("Vehicle not found");
+        if (repo.existsByPlateNumber(req.plateNumber(), id))
+            throw new IllegalArgumentException("Plate number already registered");
+        repo.update(id, req);
+    }
+
     // DELETE /api/vehicles/{id} — remove a vehicle by ID
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

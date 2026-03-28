@@ -18,5 +18,9 @@ public record VehicleRequest(
     String plateNumber,
 
     @Min(1)
-    int capacity
+    int capacity,
+
+    @NotBlank
+    @Size(max = 30)
+    String fuelType
 ) {}

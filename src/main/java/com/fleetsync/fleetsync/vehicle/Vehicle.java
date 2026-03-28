@@ -8,6 +8,7 @@ public record Vehicle(
     String type,
     String plateNumber,
     int capacity,
+    String fuelType,
     String status,
     LocalDateTime createdAt
 ) {}
