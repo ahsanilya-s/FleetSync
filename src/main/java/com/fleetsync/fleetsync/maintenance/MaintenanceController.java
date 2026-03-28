@@ -2,6 +2,8 @@ package com.fleetsync.fleetsync.maintenance;
 
 import com.fleetsync.fleetsync.vehicle.VehicleRepository;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// REST controller for maintenance record management
+// All endpoints are restricted to MANAGER role (enforced in SecurityConfig)
 // REST controller for vehicle maintenance management
 // All endpoints are restricted to MANAGER role (enforced in SecurityConfig)
 @Validated
@@ -18,6 +22,8 @@ import java.util.List;
 @RequestMapping("/api/maintenance")
 public class MaintenanceController {
 
+    private final MaintenanceRepository maintenanceRepo;
+    private final VehicleRepository vehicleRepo; // Used to validate that the vehicle exists
     // Default lookahead window for upcoming maintenance queries (days)
     private static final int DEFAULT_UPCOMING_DAYS = 30;
 
@@ -40,12 +46,18 @@ public class MaintenanceController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void log(@Valid @RequestBody MaintenanceRequest req) {
+        // Ensure the vehicle exists before attaching a maintenance record
         if (!vehicleRepo.existsById(req.vehicleId()))
             throw new IllegalArgumentException("Vehicle not found");
         maintenanceRepo.save(req);
     }
 
     // GET /api/maintenance/{vehicleId}
+    // Returns all maintenance records for the specified vehicle ordered by date (newest first)
+    // Returns 404 Not Found if the vehicle does not exist
+    @GetMapping("/{vehicleId}")
+    public List<Maintenance> getByVehicle(@PathVariable Long vehicleId) {
+        // Ensure the vehicle exists before querying maintenance history
     // Returns the full maintenance history for a specific vehicle, newest first
     // Returns 404 Not Found if the vehicle does not exist
     @GetMapping("/{vehicleId}")
@@ -55,6 +67,11 @@ public class MaintenanceController {
         return maintenanceRepo.findByVehicleId(vehicleId);
     }
 
+    // Handles IllegalArgumentException thrown by any method in this controller
+    // Returns 404 Not Found for missing vehicles
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleError(IllegalArgumentException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
     // GET /api/maintenance/upcoming
     // Returns maintenance records scheduled within the next [days] days (default: 30)
     // Optionally filters by currentMileage — includes records where next_service_mileage

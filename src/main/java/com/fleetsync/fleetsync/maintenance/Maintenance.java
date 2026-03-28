@@ -8,6 +8,11 @@ import java.time.LocalDateTime;
 // Each field maps directly to a column in the maintenance table
 public record Maintenance(
     Long id,
+    Long vehicleId,        // FK → vehicles.id
+    LocalDate date,        // Date the maintenance was performed
+    String type,           // e.g. OIL_CHANGE, TIRE_ROTATION, INSPECTION
+    String description,
+    BigDecimal cost,
     Long vehicleId,
     LocalDate date,            // Date the maintenance was performed
     String type,               // e.g. OIL_CHANGE, TIRE_ROTATION, BRAKE_INSPECTION
