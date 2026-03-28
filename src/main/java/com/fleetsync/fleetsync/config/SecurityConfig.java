@@ -61,9 +61,9 @@ public class SecurityConfig {
                 // Allow anyone to register a new account without authentication
                 .requestMatchers("/api/auth/register").permitAll()
 
-                // Restrict all vehicle, driver, and trip endpoints to MANAGER role only
+                // Restrict all vehicle, driver, trip, and maintenance endpoints to MANAGER role only
                 // Any other role (e.g. DRIVER) or unauthenticated request will get 403
-                .requestMatchers("/api/vehicles/**", "/api/drivers/**", "/api/trips/**").hasRole("MANAGER")
+                .requestMatchers("/api/vehicles/**", "/api/drivers/**", "/api/trips/**", "/api/maintenance/**").hasRole("MANAGER")
 
                 // All other requests also require authentication
                 .anyRequest().authenticated()
