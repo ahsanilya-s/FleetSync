@@ -64,6 +64,9 @@ public class SecurityConfig {
                 // Any other role (e.g. DRIVER) or unauthenticated request will get 403
                 .requestMatchers("/api/vehicles/**", "/api/drivers/**", "/api/trips/**",
                                  "/api/maintenance/**", "/api/ai/**").hasRole("MANAGER")
+                // Restrict all vehicle, driver, trip, and maintenance endpoints to MANAGER role only
+                // Any other role (e.g. DRIVER) or unauthenticated request will get 403
+                .requestMatchers("/api/vehicles/**", "/api/drivers/**", "/api/trips/**", "/api/maintenance/**").hasRole("MANAGER")
 
                 // All other requests also require authentication
                 .anyRequest().authenticated()

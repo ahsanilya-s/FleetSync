@@ -57,3 +57,18 @@ CREATE TABLE IF NOT EXISTS trips (
     FOREIGN KEY (driver_id)  REFERENCES drivers(id) ON DELETE CASCADE,
     FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
 );
+
+-- Stores maintenance records logged by the fleet manager for each vehicle
+-- next_service_date and next_service_mileage support upcoming-maintenance and alert queries
+CREATE TABLE IF NOT EXISTS maintenance (
+    id                   BIGINT         AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id           BIGINT         NOT NULL,
+    date                 DATE           NOT NULL,           -- Date maintenance was performed
+    type                 VARCHAR(100)   NOT NULL,           -- e.g. OIL_CHANGE, TIRE_ROTATION
+    description          VARCHAR(500),                      -- Optional details about the work done
+    cost                 DECIMAL(10,2)  NOT NULL,
+    next_service_date    DATE,                              -- Scheduled date for next service
+    next_service_mileage INT,                               -- Mileage at which next service is due
+    created_at           TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+);
