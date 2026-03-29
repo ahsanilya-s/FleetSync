@@ -11,6 +11,11 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
@@ -34,10 +39,7 @@ public class SecurityConfig {
     // and password encoder so it can validate credentials on each request
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        // Spring Security 6.4+: UserDetailsService is required in the constructor
-        // Spring Security 7 requires UserDetailsService via constructor
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userService);
-        // Tells Spring Security how to verify the submitted password against the stored hash
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
@@ -48,12 +50,30 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    // Allows the React frontend (Vite dev server on port 5173) to call the API
+    // Must be registered here — spring.mvc.cors properties are ignored when Spring Security is active
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // Allow the browser to send the Authorization header (Basic Auth)
+        config.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
     // Defines the HTTP security rules for the application
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             // Disable CSRF — not needed for stateless REST APIs
             .csrf(csrf -> csrf.disable())
+
+            // Apply CORS config defined above
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
             // Register our custom authentication provider
             .authenticationProvider(authenticationProvider())
@@ -63,20 +83,19 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/register").permitAll()
 
                 // Allow both MANAGER and DRIVER to update a trip's status
-                // (drivers mark trips as started or completed)
-                .requestMatchers(HttpMethod.PUT, "/api/trips/**/status").hasAnyRole("MANAGER", "DRIVER")
+                .requestMatchers(HttpMethod.PUT, "/api/trips/*/status").hasAnyRole("MANAGER", "DRIVER")
 
-                // Restrict all vehicle, driver, trip, maintenance, and AI endpoints to MANAGER role only
-                // Any other role (e.g. DRIVER) or unauthenticated request will get 403
+                // Allow DRIVER to read their own trips
+                .requestMatchers(HttpMethod.GET, "/api/trips").hasAnyRole("MANAGER", "DRIVER")
+
+                // Restrict all other vehicle, driver, trip, maintenance, and AI endpoints to MANAGER only
                 .requestMatchers("/api/vehicles/**", "/api/drivers/**", "/api/trips/**",
                                  "/api/maintenance/**", "/api/ai/**").hasRole("MANAGER")
 
-                // All other requests also require authentication
                 .anyRequest().authenticated()
             )
 
             // Enable HTTP Basic authentication — credentials sent as Base64 in Authorization header
-            // Format: Authorization: Basic <base64(username:password)>
             .httpBasic(basic -> {});
 
         return http.build();
