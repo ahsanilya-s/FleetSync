@@ -66,14 +66,10 @@ public class SecurityConfig {
                 // (drivers mark trips as started or completed)
                 .requestMatchers(HttpMethod.PUT, "/api/trips/**/status").hasAnyRole("MANAGER", "DRIVER")
 
-                // Restrict all other vehicle, driver, and trip endpoints to MANAGER role only
                 // Restrict all vehicle, driver, trip, maintenance, and AI endpoints to MANAGER role only
                 // Any other role (e.g. DRIVER) or unauthenticated request will get 403
                 .requestMatchers("/api/vehicles/**", "/api/drivers/**", "/api/trips/**",
                                  "/api/maintenance/**", "/api/ai/**").hasRole("MANAGER")
-                // Restrict all vehicle, driver, trip, and maintenance endpoints to MANAGER role only
-                // Any other role (e.g. DRIVER) or unauthenticated request will get 403
-                .requestMatchers("/api/vehicles/**", "/api/drivers/**", "/api/trips/**", "/api/maintenance/**").hasRole("MANAGER")
 
                 // All other requests also require authentication
                 .anyRequest().authenticated()
