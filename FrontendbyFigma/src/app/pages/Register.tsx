@@ -106,7 +106,7 @@ export function Register() {
 
           {success && (
             <Alert variant="success" className="mb-4">
-              Account created! Redirecting to dashboard...
+              Account created! Redirecting...
             </Alert>
           )}
 

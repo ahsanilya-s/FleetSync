@@ -38,22 +38,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (username: string, password: string) => {
     const basicAuth = btoa(`${username}:${password}`);
 
-    // Step 1: verify credentials using the public-ish trips endpoint (both roles can access GET /api/trips)
-    const tripsRes = await fetch('/api/trips', {
+    // Verify credentials and fetch role in one request via /api/auth/me
+    const meRes = await fetch('/api/auth/me', {
       headers: { Authorization: `Basic ${basicAuth}` },
     });
 
-    if (tripsRes.status === 401) throw new Error('Invalid username or password');
-    if (!tripsRes.ok && tripsRes.status !== 403) throw new Error('Login failed. Please try again.');
+    if (meRes.status === 401) throw new Error('Invalid username or password');
+    if (!meRes.ok) throw new Error('Login failed. Please try again.');
 
-    // Step 2: determine role — try a MANAGER-only endpoint
-    const vehiclesRes = await fetch('/api/vehicles', {
-      headers: { Authorization: `Basic ${basicAuth}` },
-    });
+    const { role } = await meRes.json() as { username: string; role: string };
 
-    const role: UserRole = vehiclesRes.ok ? 'MANAGER' : 'DRIVER';
-
-    const userData: User = { username, role };
+    const userData: User = { username, role: role as UserRole };
     setUser(userData);
     setCredentialsState(basicAuth);
     setCredentials(basicAuth);

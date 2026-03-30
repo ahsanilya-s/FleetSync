@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
@@ -11,6 +11,14 @@ import { MyTrips } from './pages/MyTrips';
 import { Settings } from './pages/Settings';
 import { NotFound } from './pages/NotFound';
 import { Layout } from './components/Layout';
+import { useAuth, UserRole } from './contexts/AuthContext';
+
+function ProtectedRoute({ role }: { role?: UserRole }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (role && user.role !== role) return <Navigate to="/my-trips" replace />;
+  return <Outlet />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -23,43 +31,25 @@ export const router = createBrowserRouter([
   },
   {
     path: '/my-trips',
-    element: <MyTrips />,
+    element: <ProtectedRoute role="DRIVER" />,
+    children: [{ index: true, element: <MyTrips /> }],
   },
   {
     path: '/',
-    element: <Layout />,
+    element: <ProtectedRoute role="MANAGER" />,
     children: [
       {
-        index: true,
-        element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: 'dashboard',
-        element: <Dashboard />,
-      },
-      {
-        path: 'vehicles',
-        element: <Vehicles />,
-      },
-      {
-        path: 'drivers',
-        element: <Drivers />,
-      },
-      {
-        path: 'trips',
-        element: <Trips />,
-      },
-      {
-        path: 'maintenance',
-        element: <Maintenance />,
-      },
-      {
-        path: 'ai',
-        element: <AIAssistant />,
-      },
-      {
-        path: 'settings',
-        element: <Settings />,
+        element: <Layout />,
+        children: [
+          { index: true, element: <Navigate to="/dashboard" replace /> },
+          { path: 'dashboard', element: <Dashboard /> },
+          { path: 'vehicles', element: <Vehicles /> },
+          { path: 'drivers', element: <Drivers /> },
+          { path: 'trips', element: <Trips /> },
+          { path: 'maintenance', element: <Maintenance /> },
+          { path: 'ai', element: <AIAssistant /> },
+          { path: 'settings', element: <Settings /> },
+        ],
       },
     ],
   },

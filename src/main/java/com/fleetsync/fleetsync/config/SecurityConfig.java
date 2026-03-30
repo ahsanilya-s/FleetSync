@@ -82,6 +82,9 @@ public class SecurityConfig {
                 // Allow anyone to register a new account without authentication
                 .requestMatchers("/api/auth/register").permitAll()
 
+                // Allow authenticated users to fetch their own profile
+                .requestMatchers("/api/auth/me").authenticated()
+
                 // Allow both MANAGER and DRIVER to update a trip's status
                 .requestMatchers(HttpMethod.PUT, "/api/trips/*/status").hasAnyRole("MANAGER", "DRIVER")
 
