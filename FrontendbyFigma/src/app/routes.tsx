@@ -16,18 +16,26 @@ import { useAuth, UserRole } from './contexts/AuthContext';
 function ProtectedRoute({ role }: { role?: UserRole }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
-  if (role && user.role !== role) return <Navigate to="/my-trips" replace />;
+  if (role && user.role !== role) {
+    return <Navigate to={user.role === 'MANAGER' ? '/dashboard' : '/my-trips'} replace />;
+  }
+  return <Outlet />;
+}
+
+// Redirects already-authenticated users away from /login and /register
+function PublicRoute() {
+  const { user } = useAuth();
+  if (user) return <Navigate to={user.role === 'MANAGER' ? '/dashboard' : '/my-trips'} replace />;
   return <Outlet />;
 }
 
 export const router = createBrowserRouter([
   {
-    path: '/login',
-    element: <Login />,
-  },
-  {
-    path: '/register',
-    element: <Register />,
+    element: <PublicRoute />,
+    children: [
+      { path: '/login', element: <Login /> },
+      { path: '/register', element: <Register /> },
+    ],
   },
   {
     path: '/my-trips',

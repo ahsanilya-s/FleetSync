@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { Link } from 'react-router';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -8,7 +8,6 @@ import { Alert } from '../components/Alert';
 import { Truck, Eye, EyeOff } from 'lucide-react';
 
 export function Register() {
-  const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
@@ -57,10 +56,7 @@ export function Register() {
     try {
       await register(formData.username, formData.email, formData.password, formData.role);
       setSuccess(true);
-      // Role-based redirect after auto-login in AuthContext
-      setTimeout(() => {
-        navigate(formData.role === 'MANAGER' ? '/dashboard' : '/my-trips');
-      }, 1000);
+      // PublicRoute will automatically redirect once user is set in AuthContext
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       if (errorMessage.toLowerCase().includes('username')) {
