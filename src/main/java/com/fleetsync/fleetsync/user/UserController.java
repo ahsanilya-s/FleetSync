@@ -54,6 +54,6 @@ public class UserController {
         problem.setDetail(detail);
         return problem;
     }
-
+    //currently i dont know the use of this function
     public record UserMeResponse(String username, String role) {}
 }
