@@ -18,7 +18,6 @@ public class MaintenanceRepository {
 
     // Inserts a new maintenance record linked to the given vehicle
     public void save(MaintenanceRequest req) {
-        jdbc.sql("INSERT INTO maintenance (vehicle_id, date, type, description, cost) VALUES (:vehicleId, :date, :type, :description, :cost)")
         jdbc.sql("""
                 INSERT INTO maintenance
                     (vehicle_id, date, type, description, cost, next_service_date, next_service_mileage)
@@ -30,40 +29,6 @@ public class MaintenanceRepository {
             .param("type", req.type())
             .param("description", req.description())
             .param("cost", req.cost())
-            .update();
-    }
-
-    // Returns all maintenance records for a specific vehicle ordered by date (newest first)
-    public List<Maintenance> findByVehicleId(Long vehicleId) {
-        return jdbc.sql("SELECT * FROM maintenance WHERE vehicle_id = :vehicleId ORDER BY date DESC, created_at DESC")
-                   .param("vehicleId", vehicleId)
-                   .query((rs, rowNum) -> new Maintenance(
-                       rs.getLong("id"),
-                       rs.getLong("vehicle_id"),
-                       rs.getDate("date") != null ? rs.getDate("date").toLocalDate() : null,
-                       rs.getString("type"),
-                       rs.getString("description"),
-                       rs.getBigDecimal("cost"),
-                       rs.getTimestamp("created_at").toLocalDateTime()
-                   ))
-                   .list();
-    }
-
-    // Returns all maintenance records across all vehicles — used by the AI service for fleet context.
-    // Limited to the 200 most recent records to keep the AI prompt size manageable.
-    public List<Maintenance> findAll() {
-        return jdbc.sql("SELECT * FROM maintenance ORDER BY date DESC, created_at DESC LIMIT 200")
-                   .query((rs, rowNum) -> new Maintenance(
-                       rs.getLong("id"),
-                       rs.getLong("vehicle_id"),
-                       rs.getDate("date") != null ? rs.getDate("date").toLocalDate() : null,
-                       rs.getString("type"),
-                       rs.getString("description"),
-                       rs.getBigDecimal("cost"),
-                       rs.getTimestamp("created_at").toLocalDateTime()
-                   ))
-                   .list();
-    }
             .param("nextServiceDate", req.nextServiceDate())
             .param("nextServiceMileage", req.nextServiceMileage())
             .update();
@@ -71,8 +36,16 @@ public class MaintenanceRepository {
 
     // Returns all maintenance records for the given vehicle, newest first
     public List<Maintenance> findByVehicleId(Long vehicleId) {
-        return jdbc.sql("SELECT * FROM maintenance WHERE vehicle_id = :vehicleId ORDER BY date DESC")
+        return jdbc.sql("SELECT * FROM maintenance WHERE vehicle_id = :vehicleId ORDER BY date DESC, created_at DESC")
                    .param("vehicleId", vehicleId)
+                   .query((rs, rowNum) -> mapRow(rs))
+                   .list();
+    }
+
+    // Returns all maintenance records across all vehicles — used by the AI service for fleet context.
+    // Limited to the 200 most recent records to keep the AI prompt size manageable.
+    public List<Maintenance> findAll() {
+        return jdbc.sql("SELECT * FROM maintenance ORDER BY date DESC, created_at DESC LIMIT 200")
                    .query((rs, rowNum) -> mapRow(rs))
                    .list();
     }

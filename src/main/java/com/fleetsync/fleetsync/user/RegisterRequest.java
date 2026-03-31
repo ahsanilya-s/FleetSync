@@ -20,5 +20,6 @@ public record RegisterRequest(
     // Role assigned to the user on registration — defaults to DRIVER if not provided
     // Accepted values: MANAGER, DRIVER
     @NotBlank
+    @Pattern(regexp = "^(MANAGER|DRIVER)$", message = "Role must be MANAGER or DRIVER")
     String role
 ) {};
