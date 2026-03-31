@@ -35,7 +35,7 @@ public class UserController {
             .orElse("DRIVER");
         return new UserMeResponse(userDetails.getUsername(), role);
     }
-
+//i dont know what to do at this point!!!!
     // Catches duplicate email/username from UserService and returns 409
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleConflict(IllegalArgumentException ex) {
