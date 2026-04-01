@@ -11,19 +11,30 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-// REST controller for trip management
-// POST /api/trips and GET /api/trips are restricted to MANAGER role
-// PUT /api/trips/{id}/status is accessible by both MANAGER and DRIVER (see SecurityConfig)
+/**
+ * TripController — REST controller for trip assignment and lifecycle management.
+ *
+ * Exposes endpoints under /api/trips.
+ * Access rules (from SecurityConfig):
+ *   - POST /api/trips              → MANAGER only
+ *   - GET  /api/trips              → MANAGER and DRIVER
+ *   - PUT  /api/trips/{id}/status  → MANAGER and DRIVER
+ */
 @RestController
 @RequestMapping("/api/trips")
 public class TripController {
 
-    // Valid terminal statuses — driver and vehicle are freed when the trip reaches one of these
+    /**
+     * Terminal statuses — once a trip reaches one of these, no further transitions are allowed.
+     * When a trip reaches a terminal status, the driver and vehicle are freed (set to AVAILABLE).
+     *
+     * Set.of() creates an immutable set — good for membership checks (contains()).
+     */
     private static final Set<String> TERMINAL_STATUSES = Set.of("COMPLETED", "CANCELLED");
 
     private final TripRepository tripRepo;
-    private final DriverRepository driverRepo;   // Used to validate driver exists and update their status
-    private final VehicleRepository vehicleRepo; // Used to validate vehicle exists and update its status
+    private final DriverRepository driverRepo;    // needed to validate driver exists and update their status
+    private final VehicleRepository vehicleRepo;  // needed to validate vehicle exists and update its status
 
     public TripController(TripRepository tripRepo, DriverRepository driverRepo, VehicleRepository vehicleRepo) {
         this.tripRepo = tripRepo;
@@ -31,9 +42,23 @@ public class TripController {
         this.vehicleRepo = vehicleRepo;
     }
 
-    // GET /api/trips
-    // Returns all trips, optionally filtered by driverId or vehicleId query parameter
-    // Supports trip history for a specific driver or vehicle
+    /**
+     * GET /api/trips
+     * Returns all trips, optionally filtered by driverId or vehicleId.
+     *
+     * @RequestParam(required = false) — these query parameters are optional.
+     * If provided, only trips for that driver/vehicle are returned.
+     * If neither is provided, all trips are returned.
+     *
+     * Example URLs:
+     *   GET /api/trips                    → all trips
+     *   GET /api/trips?driverId=3         → trips for driver with ID 3
+     *   GET /api/trips?vehicleId=7        → trips for vehicle with ID 7
+     *
+     * @param driverId  optional filter by driver ID
+     * @param vehicleId optional filter by vehicle ID
+     * @return a JSON array of Trip objects
+     */
     @GetMapping
     public List<Trip> getAll(
             @RequestParam(required = false) Long driverId,
@@ -43,82 +68,124 @@ public class TripController {
         return tripRepo.findAll();
     }
 
-    // POST /api/trips
-    // Creates a new trip by assigning a driver to a vehicle
-    // Returns 201 Created on success
-    // Returns 404 Not Found if driver or vehicle does not exist
-    // Returns 409 Conflict if driver or vehicle is already on an active trip
+    /**
+     * POST /api/trips
+     * Creates a new trip by assigning a driver to a vehicle for a journey.
+     *
+     * Validation steps (in order):
+     *   1. Driver must exist in the database
+     *   2. Vehicle must exist in the database
+     *   3. Driver must not already be on an active trip (SCHEDULED or IN_PROGRESS)
+     *   4. Vehicle must not already be on an active trip
+     *
+     * On success:
+     *   - Trip is saved with status "SCHEDULED"
+     *   - Driver status is updated to "ON_TRIP"
+     *   - Vehicle status is updated to "ON_TRIP"
+     *
+     * @param req the trip assignment data from the request body
+     * @throws IllegalArgumentException if any validation step fails
+     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void assign(@Valid @RequestBody TripRequest req) {
-        // Ensure the driver exists in the database before assigning
+        // Step 1: Ensure the driver exists before assigning
         if (!driverRepo.existsById(req.driverId()))
             throw new IllegalArgumentException("Driver not found");
 
-        // Ensure the vehicle exists in the database before assigning
+        // Step 2: Ensure the vehicle exists before assigning
         if (!vehicleRepo.existsById(req.vehicleId()))
             throw new IllegalArgumentException("Vehicle not found");
 
-        // A driver cannot be assigned to two trips at the same time
+        // Step 3: Prevent assigning a driver who is already on another active trip
         if (tripRepo.driverHasActiveTrip(req.driverId()))
             throw new IllegalArgumentException("Driver is already on an active trip");
 
-        // A vehicle cannot be used in two trips at the same time
+        // Step 4: Prevent assigning a vehicle that is already on another active trip
         if (tripRepo.vehicleHasActiveTrip(req.vehicleId()))
             throw new IllegalArgumentException("Vehicle is already on an active trip");
 
-        // Save the trip assignment to the database
+        // Save the trip (status defaults to SCHEDULED in the DB)
         tripRepo.save(req);
 
-        // Update driver and vehicle statuses to ON_TRIP to reflect their reservation
+        // Mark both the driver and vehicle as ON_TRIP so they can't be double-booked
         driverRepo.updateStatus(req.driverId(), "ON_TRIP");
         vehicleRepo.updateStatus(req.vehicleId(), "ON_TRIP");
     }
 
-    // PUT /api/trips/{id}/status
-    // Updates the status of a trip following the lifecycle: SCHEDULED → IN_PROGRESS → COMPLETED / CANCELLED
-    // Accessible by both MANAGER and DRIVER roles (see SecurityConfig)
-    // Sets start_time when trip moves to IN_PROGRESS, end_time when COMPLETED or CANCELLED
-    // Resets driver and vehicle statuses to AVAILABLE when the trip ends
+    /**
+     * PUT /api/trips/{id}/status
+     * Updates the status of a trip following its lifecycle.
+     *
+     * Valid transitions:
+     *   SCHEDULED   → IN_PROGRESS  (driver starts the trip)
+     *   SCHEDULED   → CANCELLED    (trip cancelled before starting)
+     *   IN_PROGRESS → COMPLETED    (trip finishes successfully)
+     *   IN_PROGRESS → CANCELLED    (trip cancelled mid-way)
+     *
+     * Side effects on terminal transitions (COMPLETED or CANCELLED):
+     *   - Driver status is reset to "AVAILABLE"
+     *   - Vehicle status is reset to "AVAILABLE"
+     *
+     * Timestamps are set automatically:
+     *   - start_time is set when transitioning to IN_PROGRESS
+     *   - end_time is set when transitioning to COMPLETED or CANCELLED
+     *
+     * @param id  the ID of the trip to update (from the URL path)
+     * @param req the new status from the request body
+     * @throws IllegalArgumentException if the trip is not found or the transition is invalid
+     */
     @PutMapping("/{id}/status")
     public void updateStatus(@PathVariable Long id, @Valid @RequestBody TripStatusRequest req) {
+        // Load the current trip — throws 404 if not found
         Trip trip = tripRepo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Trip not found"));
 
-        String current = trip.status();
-        String next = req.status().toUpperCase();
+        String current = trip.status();                    // e.g. "SCHEDULED"
+        String next    = req.status().toUpperCase();       // normalize to uppercase
 
-        // Validate the requested status is a known value
+        // Reject unknown status values before checking transitions
         if (!Set.of("IN_PROGRESS", "COMPLETED", "CANCELLED").contains(next))
             throw new IllegalArgumentException("Invalid status: must be IN_PROGRESS, COMPLETED, or CANCELLED");
 
-        // Enforce valid status transitions
+        // Use a switch expression to determine if the requested transition is valid
+        // switch expressions (Java 14+) return a value — cleaner than if/else chains
         boolean valid = switch (current) {
             case "SCHEDULED"   -> next.equals("IN_PROGRESS") || next.equals("CANCELLED");
             case "IN_PROGRESS" -> next.equals("COMPLETED")   || next.equals("CANCELLED");
-            default            -> false; // COMPLETED and CANCELLED are terminal — no further transitions
+            default            -> false;  // COMPLETED and CANCELLED are terminal — no further transitions
         };
 
         if (!valid)
             throw new IllegalArgumentException(
                 "Cannot transition trip from " + current + " to " + next);
 
-        // Set start_time when the trip moves to IN_PROGRESS
+        // Set start_time only when moving to IN_PROGRESS, null otherwise (COALESCE keeps existing value)
         LocalDateTime startTime = next.equals("IN_PROGRESS") ? LocalDateTime.now() : null;
-        // Set end_time when the trip reaches a terminal state
+
+        // Set end_time only when reaching a terminal status, null otherwise
         LocalDateTime endTime   = TERMINAL_STATUSES.contains(next) ? LocalDateTime.now() : null;
 
         tripRepo.updateStatus(id, next, startTime, endTime);
 
-        // When the trip ends, free up the driver and vehicle
+        // When the trip ends, free up the driver and vehicle for new assignments
         if (TERMINAL_STATUSES.contains(next)) {
             driverRepo.updateStatus(trip.driverId(), "AVAILABLE");
             vehicleRepo.updateStatus(trip.vehicleId(), "AVAILABLE");
         }
     }
 
-    // Handles IllegalArgumentException thrown by any method in this controller
-    // Returns 404 for missing resources, 409 for conflicts, 400 for invalid input
+    /**
+     * Exception handler for IllegalArgumentException thrown by any method in this controller.
+     *
+     * Determines the HTTP status based on the error message content:
+     *   - "not found"              → 404 Not Found
+     *   - "already on an active trip" → 409 Conflict
+     *   - anything else            → 400 Bad Request (e.g. invalid status transition)
+     *
+     * @param ex the thrown exception
+     * @return a ProblemDetail with the appropriate HTTP status and error message
+     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleError(IllegalArgumentException ex) {
         HttpStatus status;
@@ -128,7 +195,7 @@ public class TripController {
         } else if (msg.contains("already on an active trip")) {
             status = HttpStatus.CONFLICT;
         } else {
-            status = HttpStatus.BAD_REQUEST;
+            status = HttpStatus.BAD_REQUEST;  // invalid status transition or unknown status value
         }
         ProblemDetail problem = ProblemDetail.forStatus(status);
         problem.setDetail(msg);
