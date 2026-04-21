@@ -36,6 +36,8 @@
 \usepackage{tocloft}
 \usepackage{setspace}
 \usepackage{parskip}
+\usepackage{fontawesome5}
+\setlength{\headheight}{14pt}
 
 % ─── Colors ─────────────────────────────────────────────────────────────────
 \definecolor{primaryblue}{HTML}{1A73E8}
@@ -151,7 +153,12 @@
   xleftmargin=15pt,
 }
 
-\lstset{style=javastyle}
+\lstset{style=javastyle,
+  extendedchars=true,
+  literate={─}{-}1 {│}{|}1 {├}{|}1 {└}{+}1 {•}{*}1
+           {←}{$\leftarrow$}1 {→}{$\rightarrow$}1
+           {↑}{$\uparrow$}1 {↓}{$\downarrow$}1,
+}
 
 % ─── Custom Boxes ────────────────────────────────────────────────────────────
 \tcbset{
@@ -159,7 +166,7 @@
     enhanced, breakable,
     colback=ailight, colframe=aicolor,
     fonttitle=\bfseries\small,
-    title={\textbf{[AI]} AI CAN WRITE THIS},
+    title={\faRobot\ AI CAN WRITE THIS},
     attach boxed title to top left={yshift=-2mm, xshift=5mm},
     boxed title style={colback=aicolor, colframe=aicolor, fontupper=\color{white}},
     top=6mm, left=4mm, right=4mm, bottom=4mm,
@@ -168,7 +175,7 @@
     enhanced, breakable,
     colback=handlight, colframe=handcolor,
     fonttitle=\bfseries\small,
-    title={\textbf{[!]} WRITE THIS YOURSELF --- CRITICAL},
+    title={\faHandPaper\ WRITE THIS YOURSELF --- CRITICAL},
     attach boxed title to top left={yshift=-2mm, xshift=5mm},
     boxed title style={colback=handcolor, colframe=handcolor, fontupper=\color{white}},
     top=6mm, left=4mm, right=4mm, bottom=4mm,
@@ -177,7 +184,7 @@
     enhanced, breakable,
     colback=lightblue, colframe=primaryblue,
     fonttitle=\bfseries\small,
-    title={\textbf{[i]} CONCEPT NOTE},
+    title={\faBookOpen\ CONCEPT NOTE},
     attach boxed title to top left={yshift=-2mm, xshift=5mm},
     boxed title style={colback=primaryblue, colframe=primaryblue, fontupper=\color{white}},
     top=6mm, left=4mm, right=4mm, bottom=4mm,
@@ -186,7 +193,7 @@
     enhanced, breakable,
     colback=lightorange, colframe=warnorange,
     fonttitle=\bfseries\small,
-    title={\textbf{[!]} WATCH OUT},
+    title={\faExclamationTriangle\ WATCH OUT},
     attach boxed title to top left={yshift=-2mm, xshift=5mm},
     boxed title style={colback=warnorange, colframe=warnorange, fontupper=\color{white}},
     top=6mm, left=4mm, right=4mm, bottom=4mm,
@@ -195,7 +202,7 @@
     enhanced, breakable,
     colback=lightgreen, colframe=successgreen,
     fonttitle=\bfseries\small,
-    title={$\checkmark$ CHECKPOINT},
+    title={\faCheckCircle\ CHECKPOINT},
     attach boxed title to top left={yshift=-2mm, xshift=5mm},
     boxed title style={colback=successgreen, colframe=successgreen, fontupper=\color{white}},
     top=6mm, left=4mm, right=4mm, bottom=4mm,
@@ -204,7 +211,7 @@
     enhanced, breakable,
     colback=lightred, colframe=dangerred,
     fonttitle=\bfseries\small,
-    title={\textbf{[*]} INTERVIEW GOLD},
+    title={\faBullseye\ INTERVIEW GOLD},
     attach boxed title to top left={yshift=-2mm, xshift=5mm},
     boxed title style={colback=dangerred, colframe=dangerred, fontupper=\color{white}},
     top=6mm, left=4mm, right=4mm, bottom=4mm,
@@ -248,7 +255,7 @@
 \newcommand{\term}[1]{\textbf{\textcolor{primaryblue}{#1}}}
 \newcommand{\code}[1]{\texttt{\textcolor{keywordblue}{#1}}}
 \newcommand{\file}[1]{\texttt{\textcolor{successgreen}{#1}}}
-\newcommand{\endpoint}[1]{\texttt{\textcolor{dangerred}{#1}}}
+\newcommand{\apipath}[1]{\texttt{\textcolor{dangerred}{#1}}}
 
 % ─────────────────────────────────────────────────────────────────────────────
 %  DOCUMENT START
@@ -467,9 +474,9 @@ Here is every endpoint you will build. This is your north star --- everything in
 \toprule
 \textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
 \midrule
-POST & \endpoint{/api/auth/register} & Register a new user \\
-POST & \endpoint{/api/auth/login} & Login, receive JWT token \\
-POST & \endpoint{/api/auth/logout} & Logout (client-side token drop) \\
+POST & \apipath{/api/auth/register} & Register a new user \\
+POST & \apipath{/api/auth/login} & Login, receive JWT token \\
+POST & \apipath{/api/auth/logout} & Logout (client-side token drop) \\
 \bottomrule
 \end{tabularx}
 
@@ -478,12 +485,12 @@ POST & \endpoint{/api/auth/logout} & Logout (client-side token drop) \\
 \toprule
 \textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
 \midrule
-GET & \endpoint{/api/vehicles} & Get all vehicles (MANAGER) \\
-GET & \endpoint{/api/vehicles/\{id\}} & Get vehicle by ID (MANAGER) \\
-POST & \endpoint{/api/vehicles} & Create new vehicle (MANAGER) \\
-PUT & \endpoint{/api/vehicles/\{id\}} & Update vehicle (MANAGER) \\
-DELETE & \endpoint{/api/vehicles/\{id\}} & Delete vehicle (MANAGER) \\
-GET & \endpoint{/api/vehicles/type/\{type\}} & Filter by type (MANAGER) \\
+GET & \apipath{/api/vehicles} & Get all vehicles (MANAGER) \\
+GET & \apipath{/api/vehicles/\{id\}} & Get vehicle by ID (MANAGER) \\
+POST & \apipath{/api/vehicles} & Create new vehicle (MANAGER) \\
+PUT & \apipath{/api/vehicles/\{id\}} & Update vehicle (MANAGER) \\
+DELETE & \apipath{/api/vehicles/\{id\}} & Delete vehicle (MANAGER) \\
+GET & \apipath{/api/vehicles/type/\{type\}} & Filter by type (MANAGER) \\
 \bottomrule
 \end{tabularx}
 
@@ -492,12 +499,12 @@ GET & \endpoint{/api/vehicles/type/\{type\}} & Filter by type (MANAGER) \\
 \toprule
 \textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
 \midrule
-GET & \endpoint{/api/drivers} & Get all drivers (MANAGER) \\
-GET & \endpoint{/api/drivers/\{id\}} & Get driver by ID \\
-POST & \endpoint{/api/drivers} & Create driver (MANAGER) \\
-PUT & \endpoint{/api/drivers/\{id\}} & Update driver (MANAGER) \\
-DELETE & \endpoint{/api/drivers/\{id\}} & Delete driver (MANAGER) \\
-GET & \endpoint{/api/drivers/\{id\}/trips} & Driver trip history \\
+GET & \apipath{/api/drivers} & Get all drivers (MANAGER) \\
+GET & \apipath{/api/drivers/\{id\}} & Get driver by ID \\
+POST & \apipath{/api/drivers} & Create driver (MANAGER) \\
+PUT & \apipath{/api/drivers/\{id\}} & Update driver (MANAGER) \\
+DELETE & \apipath{/api/drivers/\{id\}} & Delete driver (MANAGER) \\
+GET & \apipath{/api/drivers/\{id\}/trips} & Driver trip history \\
 \bottomrule
 \end{tabularx}
 
@@ -506,12 +513,12 @@ GET & \endpoint{/api/drivers/\{id\}/trips} & Driver trip history \\
 \toprule
 \textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
 \midrule
-GET & \endpoint{/api/trips} & All trips (MANAGER) \\
-GET & \endpoint{/api/trips/\{id\}} & Trip detail \\
-POST & \endpoint{/api/trips} & Create trip (MANAGER) \\
-PUT & \endpoint{/api/trips/\{id\}/start} & Start trip (DRIVER/MANAGER) \\
-PUT & \endpoint{/api/trips/\{id\}/complete} & Complete trip (DRIVER/MANAGER) \\
-GET & \endpoint{/api/trips/my-trips} & Driver's own trips (DRIVER) \\
+GET & \apipath{/api/trips} & All trips (MANAGER) \\
+GET & \apipath{/api/trips/\{id\}} & Trip detail \\
+POST & \apipath{/api/trips} & Create trip (MANAGER) \\
+PUT & \apipath{/api/trips/\{id\}/start} & Start trip (DRIVER/MANAGER) \\
+PUT & \apipath{/api/trips/\{id\}/complete} & Complete trip (DRIVER/MANAGER) \\
+GET & \apipath{/api/trips/my-trips} & Driver's own trips (DRIVER) \\
 \bottomrule
 \end{tabularx}
 
@@ -1818,13 +1825,13 @@ Now build the Driver module yourself. Do not look at the Vehicle code while doin
 \begin{tcolorbox}[successbox]
 \textbf{Week 5--6 Checkpoint --- Test these in Postman:}
 \begin{itemize}
-  \item[$\checkmark$] POST \endpoint{/api/vehicles} with JSON body --- returns 201 with the created vehicle
-  \item[$\checkmark$] GET \endpoint{/api/vehicles} --- returns list of all vehicles
-  \item[$\checkmark$] GET \endpoint{/api/vehicles/1} --- returns vehicle with id 1
-  \item[$\checkmark$] PUT \endpoint{/api/vehicles/1} --- updates the vehicle
-  \item[$\checkmark$] DELETE \endpoint{/api/vehicles/1} --- returns 204
+  \item[$\checkmark$] POST \apipath{/api/vehicles} with JSON body --- returns 201 with the created vehicle
+  \item[$\checkmark$] GET \apipath{/api/vehicles} --- returns list of all vehicles
+  \item[$\checkmark$] GET \apipath{/api/vehicles/1} --- returns vehicle with id 1
+  \item[$\checkmark$] PUT \apipath{/api/vehicles/1} --- updates the vehicle
+  \item[$\checkmark$] DELETE \apipath{/api/vehicles/1} --- returns 204
   \item[$\checkmark$] POST with duplicate plate number --- returns 409 Conflict with message
-  \item[$\checkmark$] GET non-existent ID (\endpoint{/api/vehicles/999}) --- returns 404 with message
+  \item[$\checkmark$] GET non-existent ID (\apipath{/api/vehicles/999}) --- returns 404 with message
   \item[$\checkmark$] Driver module: all 5 endpoints working
 \end{itemize}
 \end{tcolorbox}
@@ -1848,7 +1855,7 @@ By end of Week 7, you will have:
 \begin{tcolorbox}[notebox]
 \textbf{JWT (JSON Web Token) --- How it works:}
 
-\textbf{Step 1 --- Login:} Client sends username + password to \endpoint{POST /api/auth/login}. Server verifies credentials. If valid, server generates a JWT token and returns it. The server does NOT store this token anywhere.
+\textbf{Step 1 --- Login:} Client sends username + password to \apipath{POST /api/auth/login}. Server verifies credentials. If valid, server generates a JWT token and returns it. The server does NOT store this token anywhere.
 
 \textbf{Step 2 --- Protected Request:} For every subsequent request, client includes the token in the HTTP header: \code{Authorization: Bearer <token>}
 
@@ -2387,10 +2394,10 @@ public class AuthController {
 \begin{tcolorbox}[successbox]
 \textbf{Week 7 Checkpoint --- Test in Postman:}
 \begin{itemize}
-  \item[$\checkmark$] POST \endpoint{/api/auth/register} with username, email, password, role=MANAGER --- returns 201 with token
-  \item[$\checkmark$] POST \endpoint{/api/auth/login} with credentials --- returns token
-  \item[$\checkmark$] GET \endpoint{/api/vehicles} without token --- returns 401 Unauthorized
-  \item[$\checkmark$] GET \endpoint{/api/vehicles} with \code{Authorization: Bearer <token>} header --- returns 200 with data
+  \item[$\checkmark$] POST \apipath{/api/auth/register} with username, email, password, role=MANAGER --- returns 201 with token
+  \item[$\checkmark$] POST \apipath{/api/auth/login} with credentials --- returns token
+  \item[$\checkmark$] GET \apipath{/api/vehicles} without token --- returns 401 Unauthorized
+  \item[$\checkmark$] GET \apipath{/api/vehicles} with \code{Authorization: Bearer <token>} header --- returns 200 with data
   \item[$\checkmark$] You can explain to someone what JWT is and how it works without notes
 \end{itemize}
 \end{tcolorbox}
