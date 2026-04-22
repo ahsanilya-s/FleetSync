@@ -11,7 +11,7 @@ public class TestController {
 
     @GetMapping("/hello")
     public String hello() {
-        return "Hello, FleetSync!";
+        return "Hello, mister!";
     }
     @GetMapping("/sheikh")
     public String sheikh() {
