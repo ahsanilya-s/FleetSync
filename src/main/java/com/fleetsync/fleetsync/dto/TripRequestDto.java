@@ -17,6 +17,7 @@ public class TripRequestDto {
     private Long driverId;
     @NotNull(message = "Trip Status must be active")
     private TripStatus status;
-
+    @NotNull(message = "Estimated Fare can not be Blank")
+    private Double estimatedFare;
 
 }
