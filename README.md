@@ -1,18 +1,20 @@
 # FleetSync 2.0 — Fleet Management System
 
-> A production-ready **Spring Boot REST API** for managing vehicles, drivers, and trips in real time. Built with Java 17, Spring Boot 4, MySQL, JPA/Hibernate, JWT authentication, and Lombok.
+> A **Spring Boot REST API** for managing vehicles, drivers, and trips. Built with Java 17, Spring Boot 4, MySQL, JPA/Hibernate, Lombok, and Jakarta Bean Validation.
 
 ---
 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Development Status](#development-status)
 - [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Domain Model](#domain-model)
 - [Enums Reference](#enums-reference)
 - [API Endpoints](#api-endpoints)
+- [Error Handling](#error-handling)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Database Setup](#database-setup)
@@ -27,18 +29,36 @@
 
 ## Overview
 
-**FleetSync 2.0** is a backend fleet management platform that enables organisations to track and coordinate their entire vehicle fleet from a single REST API. Managers can register vehicles, onboard drivers, schedule trips, and monitor trip lifecycle states — all secured behind role-based JWT authentication.
+**FleetSync 2.0** is a backend fleet management platform that enables organisations to track and coordinate their entire vehicle fleet from a single REST API. Managers can register vehicles, onboard drivers, schedule trips, and monitor trip lifecycle states.
+
+---
+
+## Development Status
+
+| Area | Status |
+|---|---|
+| JPA Entities (User, Vehicle, Driver, Trip) | ✅ Complete |
+| Enums (Role, VehicleType, VehicleStatus, TripStatus) | ✅ Complete |
+| DTOs (all request & response DTOs) | ✅ Complete |
+| Repositories (all four) | ✅ Complete |
+| VehicleService (CRUD + filtering) | ✅ Complete |
+| Global Exception Handling | ✅ Complete |
+| Bean Validation on all DTOs | ✅ Complete |
+| Driver / Trip / User Services | 🔧 In Progress |
+| REST Controllers (Driver, Trip, User, Vehicle) | 🔧 In Progress |
+| JWT Authentication & Spring Security | 📋 Planned |
 
 ---
 
 ## Key Features
 
-- **Vehicle Management** — Register, update, and retire vehicles with real-time status tracking (`AVAILABLE`, `ON_TRIP`, `MAINTENANCE`, `RETIRED`)
+- **Vehicle Management** — Register, update, and retrieve vehicles with real-time status tracking (`AVAILABLE`, `ON_TRIP`, `MAINTENANCE`, `RETIRED`); filter by type or status
 - **Driver Management** — Onboard drivers, link them to user accounts, and track license expiry dates
 - **Trip Scheduling** — Create and manage trips with full lifecycle support (`PENDING` → `IN_PROGRESS` → `COMPLETED` / `CANCELLED`)
-- **Role-Based Access Control** — Three roles: `ADMIN`, `MANAGER`, `DRIVER` with JWT-secured endpoints
+- **Role-Based Access Control** — Three roles defined: `ADMIN`, `MANAGER`, `DRIVER` (JWT enforcement planned)
 - **Audit Timestamps** — Automatic `createdAt` / `updatedAt` tracking on every entity via JPA lifecycle hooks
 - **Bean Validation** — Input validation on all DTOs using Jakarta Validation annotations
+- **Centralised Error Handling** — `GlobalExceptionHandler` returns consistent JSON error responses for `404`, `409`, `400`, and validation failures
 - **Lazy Loading** — Optimised database queries with `FetchType.LAZY` on all relationships
 
 ---
@@ -51,8 +71,8 @@
 | Framework | Spring Boot 4.0.5 |
 | Persistence | Spring Data JPA + Hibernate |
 | Database | MySQL 8+ |
-| Security | JWT (JSON Web Tokens) |
-| Build Tool | Maven |
+| Security | JWT (planned — not yet wired) |
+| Build Tool | Maven (Maven Wrapper included) |
 | Boilerplate Reduction | Lombok |
 | Validation | Jakarta Bean Validation |
 | Server | Embedded Tomcat (port 8080) |
@@ -62,39 +82,52 @@
 ## Project Structure
 
 ```
-FleetSync2.0/
+FleetSync/
 ├── src/
-│   └── main/
-│       ├── java/com/fleetsync/fleetsync/
-│       │   ├── Application.java          # Spring Boot entry point
-│       │   ├── config/                   # Security & app configuration
-│       │   ├── controller/               # REST controllers
-│       │   │   └── TestController.java
-│       │   ├── dto/                      # Request / Response DTOs
-│       │   │   ├── TripRequestDto.java
-│       │   │   ├── VehicleRequestDto.java
-│       │   │   └── VehicleResponseDto.java
-│       │   ├── entity/                   # JPA entities
-│       │   │   ├── Driver.java
-│       │   │   ├── Trip.java
-│       │   │   ├── User.java
-│       │   │   └── Vehicle.java
-│       │   ├── enums/                    # Domain enumerations
-│       │   │   ├── Role.java
-│       │   │   ├── TripStatus.java
-│       │   │   ├── VehicleStatus.java
-│       │   │   └── VehicleType.java
-│       │   ├── exception/                # Custom exception handlers
-│       │   ├── repository/               # Spring Data JPA repositories
-│       │   │   ├── DriverRepository.java
-│       │   │   ├── TripRepository.java
-│       │   │   ├── UserRepository.java
-│       │   │   └── VehicleRepository.java
-│       │   ├── security/                 # JWT filter & security config
-│       │   └── service/                  # Business logic layer
-│       └── resources/
-│           └── application.properties
+│   ├── main/
+│   │   ├── java/com/fleetsync/fleetsync/
+│   │   │   ├── Application.java                   # Spring Boot entry point
+│   │   │   ├── controller/
+│   │   │   │   └── TestController.java            # Health-check endpoints
+│   │   │   ├── dto/                               # Request / Response DTOs
+│   │   │   │   ├── DriverRequestDto.java
+│   │   │   │   ├── DriverResponseDto.java
+│   │   │   │   ├── TripRequestDto.java
+│   │   │   │   ├── TripResponseDto.java
+│   │   │   │   ├── UserRequestDto.java
+│   │   │   │   ├── UserResponseDto.java
+│   │   │   │   ├── VehicleRequestDto.java
+│   │   │   │   └── VehicleResponseDto.java
+│   │   │   ├── entity/                            # JPA entities
+│   │   │   │   ├── Driver.java
+│   │   │   │   ├── Trip.java
+│   │   │   │   ├── User.java
+│   │   │   │   └── Vehicle.java
+│   │   │   ├── enums/                             # Domain enumerations
+│   │   │   │   ├── Role.java
+│   │   │   │   ├── TripStatus.java
+│   │   │   │   ├── VehicleStatus.java
+│   │   │   │   └── VehicleType.java
+│   │   │   ├── exception/                         # Global exception handling
+│   │   │   │   ├── BusinessException.java
+│   │   │   │   ├── DuplicateResourceException.java
+│   │   │   │   ├── GlobalExceptionHandler.java
+│   │   │   │   └── ResourceNotFoundException.java
+│   │   │   ├── repository/                        # Spring Data JPA repositories
+│   │   │   │   ├── DriverRepository.java
+│   │   │   │   ├── TripRepository.java
+│   │   │   │   ├── UserRepository.java
+│   │   │   │   └── VehicleRepository.java
+│   │   │   ├── security/                          # Placeholder for future JWT filter
+│   │   │   └── service/
+│   │   │       └── VehicleService.java            # Vehicle CRUD business logic
+│   │   └── resources/
+│   │       └── application.properties
+│   └── test/
+│       └── java/com/fleetsync/fleetsync/
+│           └── ApplicationTests.java
 ├── pom.xml
+├── mvnw / mvnw.cmd                                # Maven Wrapper scripts
 └── FleetSyncExecution_Guide.pdf
 ```
 
@@ -191,13 +224,62 @@ PENDING | IN_PROGRESS | COMPLETED | CANCELLED
 
 ## API Endpoints
 
-### Test Endpoints
+### Health Check
 | Method | URL | Description |
 |---|---|---|
-| GET | `/api/test/hello` | Health check — returns greeting |
-| GET | `/api/test/sheikh` | Health check — returns greeting |
+| GET | `/api/test/hello` | Returns `"Hello, mister!"` |
+| GET | `/api/test/sheikh` | Returns `"Hello, Sheikh!"` |
 
-> Full CRUD endpoints for Vehicles, Drivers, Trips, and Users are implemented in the service and controller layers.
+### Vehicles *(service layer complete; controller endpoints in progress)*
+| Operation | Description |
+|---|---|
+| Create vehicle | Validates unique plate number; plate is uppercased automatically |
+| Get all vehicles | Returns all vehicles as a list |
+| Get vehicles by type | Filter by `VehicleType` enum value |
+| Get available vehicles | Custom JPQL query — returns all `AVAILABLE` vehicles |
+| Get vehicles by status | Filter by `VehicleStatus` enum value |
+| Update vehicle | Updates plate, model, capacity, and type; enforces plate uniqueness |
+| Find by plate number | Lookup a single vehicle by its plate number |
+
+> Driver, Trip, and User CRUD endpoints are being implemented alongside their service layers.
+
+---
+
+## Error Handling
+
+All errors return a consistent JSON structure managed by `GlobalExceptionHandler`:
+
+```json
+{
+  "timestamp": "2025-01-15T10:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Vehicle not found with id: 5"
+}
+```
+
+### HTTP Status Codes
+
+| Exception | HTTP Status | Trigger |
+|---|---|---|
+| `ResourceNotFoundException` | `404 Not Found` | Entity looked up by ID does not exist |
+| `DuplicateResourceException` | `409 Conflict` | Creating a resource with a duplicate unique field (e.g. plate number) |
+| `BusinessException` | `400 Bad Request` | Business rule violated (e.g. assigning a RETIRED vehicle) |
+| `MethodArgumentNotValidException` | `400 Bad Request` | Jakarta Bean Validation failure on request DTO |
+
+Validation failures include a `details` map with per-field error messages:
+
+```json
+{
+  "timestamp": "2025-01-15T10:30:00",
+  "status": 400,
+  "error": "Validation Failed",
+  "details": {
+    "plateNumber": "Plate number is required",
+    "capacity": "must be a positive number"
+  }
+}
+```
 
 ---
 
@@ -206,7 +288,7 @@ PENDING | IN_PROGRESS | COMPLETED | CANCELLED
 ### Prerequisites
 
 - Java 17+
-- Maven 3.8+
+- Maven 3.8+ (or use the included `./mvnw` wrapper)
 - MySQL 8+
 
 ### Database Setup
@@ -226,6 +308,7 @@ spring.datasource.password=<your_mysql_password>
 
 spring.jpa.hibernate.ddl-auto=update
 
+# JWT (prepared for future use)
 jwt.secret=<your_jwt_secret_minimum_32_chars>
 jwt.expiration=86400000
 ```
@@ -237,9 +320,9 @@ jwt.expiration=86400000
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd FleetSync2.0
+cd FleetSync
 
-# Build and run
+# Build and run using the Maven Wrapper
 ./mvnw spring-boot:run
 ```
 
@@ -270,6 +353,31 @@ The API will be available at `http://localhost:8080`.
 }
 ```
 
+### DriverRequestDto
+```json
+{
+  "firstName": "Ahmed",
+  "lastName": "Ali",
+  "licenseNumber": "LIC-9988",
+  "phoneNumber": "+92-300-1234567",
+  "licenseExpiry": "2027-06-30",
+  "userId": 3
+}
+```
+
+### DriverResponseDto
+```json
+{
+  "id": 2,
+  "firstName": "Ahmed",
+  "lastName": "Ali",
+  "licenseNumber": "LIC-9988",
+  "phoneNumber": "+92-300-1234567",
+  "licenseExpiry": "2027-06-30",
+  "isActive": true
+}
+```
+
 ### TripRequestDto
 ```json
 {
@@ -281,15 +389,55 @@ The API will be available at `http://localhost:8080`.
 }
 ```
 
+### TripResponseDto
+```json
+{
+  "id": 10,
+  "origin": "Karachi",
+  "destination": "Lahore",
+  "status": "IN_PROGRESS",
+  "notes": "Handle with care",
+  "driverId": 2,
+  "vehicleId": 1,
+  "createdById": 5,
+  "createdAt": "2025-01-15T08:00:00",
+  "startedAt": "2025-01-15T09:00:00",
+  "completedAt": null
+}
+```
+
+### UserRequestDto
+```json
+{
+  "username": "john.doe",
+  "email": "john@example.com",
+  "password": "securePassword123",
+  "role": "MANAGER"
+}
+```
+
+### UserResponseDto
+```json
+{
+  "id": 5,
+  "username": "john.doe",
+  "email": "john@example.com",
+  "role": "MANAGER",
+  "isActive": true,
+  "createdAt": "2025-01-10T12:00:00"
+}
+```
+
 ---
 
 ## Security
 
-FleetSync 2.0 uses **JWT (JSON Web Token)** authentication:
+JWT authentication is **planned** for a future iteration. The `jwt.secret` and `jwt.expiration` properties are already wired into `application.properties` in preparation.
 
-- Tokens are issued on login and must be included in the `Authorization: Bearer <token>` header for protected routes.
+The intended model when implemented:
+- Tokens will be issued on login and included in the `Authorization: Bearer <token>` header for protected routes.
 - Token expiry is configurable via `jwt.expiration` (default: 86400000 ms = 24 hours).
-- Three roles control access: `ADMIN` (full access), `MANAGER` (trip & vehicle management), `DRIVER` (view assigned trips).
+- Three roles will control access: `ADMIN` (full access), `MANAGER` (trip & vehicle management), `DRIVER` (view assigned trips).
 
 ---
 
@@ -299,7 +447,7 @@ Key points from the `FleetSyncExecution_Guide.pdf`:
 
 1. **Database First** — Create the `fleetsync_db` MySQL database before starting the application.
 2. **DDL Strategy** — Use `ddl-auto=create` on first run to generate the schema, then switch to `update`.
-3. **JWT Secret** — The secret key must be at least 32 characters long for HS256 signing.
+3. **JWT Secret** — The secret key must be at least 32 characters long for HS256 signing (relevant once security is wired in).
 4. **Port** — The application runs on port `8080` by default; change via `server.port` in `application.properties`.
 5. **Lazy Loading** — All entity relationships use `FetchType.LAZY` to avoid N+1 query issues; use DTOs to project only required fields.
 6. **Validation** — All request DTOs are validated with Jakarta Bean Validation; invalid requests return `400 Bad Request` with field-level error messages.
@@ -317,4 +465,4 @@ Key points from the `FleetSyncExecution_Guide.pdf`:
 
 ---
 
-> Built with Spring Boot · MySQL · JWT · Lombok · Jakarta Validation
+> Built with Spring Boot · MySQL · Lombok · Jakarta Validation
