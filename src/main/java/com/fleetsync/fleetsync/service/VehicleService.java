@@ -5,6 +5,7 @@ import com.fleetsync.fleetsync.dto.VehicleResponseDto;
 import com.fleetsync.fleetsync.entity.Vehicle;
 import com.fleetsync.fleetsync.enums.VehicleStatus;
 import com.fleetsync.fleetsync.enums.VehicleType;
+import com.fleetsync.fleetsync.exception.BusinessException;
 import com.fleetsync.fleetsync.exception.DuplicateResourceException;
 import com.fleetsync.fleetsync.exception.ResourceNotFoundException;
 import com.fleetsync.fleetsync.repository.VehicleRepository;
@@ -42,6 +43,10 @@ public class VehicleService {
         return vehicleRepository.findAll().stream().map(this::toDto).toList();
     }
 
+    public List<VehicleResponseDto> findById(Long id){
+        return vehicleRepository.findById(id).stream().map(this::toDto).toList();
+    }
+
     public List<VehicleResponseDto> getByType(VehicleType type){
         return vehicleRepository.findByType(type).stream().map(this::toDto).toList();
     }
@@ -60,6 +65,15 @@ public class VehicleService {
         return toDto(vehicleRepository.save(vehicle));
     }
 
+    @Transactional
+    public void deleteVehicle(Long id){
+        Vehicle vehicle = findOrThrow(id);
+        if(vehicle.getStatus()==VehicleStatus.ON_TRIP){
+            throw new BusinessException("Vehicle is on a trip");
+        }
+
+        vehicleRepository.delete(vehicle);
+    }
 
     private Vehicle findOrThrow(Long id) {
         return vehicleRepository.findById(id)
