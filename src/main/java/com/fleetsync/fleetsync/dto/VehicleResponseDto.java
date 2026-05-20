@@ -1,6 +1,7 @@
 package com.fleetsync.fleetsync.dto;
 
 import com.fleetsync.fleetsync.enums.VehicleStatus;
+import com.fleetsync.fleetsync.enums.VehicleType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -9,6 +10,7 @@ import lombok.Data;
 public class VehicleResponseDto {
     private Long id;
     private String plateNumber;
+    private VehicleType type;
     private String model;
     private Integer capacity;
     private VehicleStatus status;
