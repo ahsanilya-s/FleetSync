@@ -39,12 +39,14 @@ public class VehicleService {
         return toDto(vehicleRepository.save(vehicle));
     }
 
+    @Transactional
     public List<VehicleResponseDto> getAllVehicles() {
         return vehicleRepository.findAll().stream().map(this::toDto).toList();
     }
 
-    public List<VehicleResponseDto> findById(Long id){
-        return vehicleRepository.findById(id).stream().map(this::toDto).toList();
+    @Transactional
+    public VehicleResponseDto getVehicleById(Long id) {
+        return toDto(findOrThrow(id));
     }
 
     public List<VehicleResponseDto> getByType(VehicleType type){
