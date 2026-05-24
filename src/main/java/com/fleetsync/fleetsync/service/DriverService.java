@@ -109,8 +109,6 @@ public class DriverService {
 
     /**
      * Returns only the drivers that are currently active (isActive = true).
-     *
-     * Step-by-step:
      * 1. findByIsActive(true) is a Spring Data JPA derived query — Spring auto-generates
      *    the SQL: SELECT * FROM drivers WHERE is_active = true
      * 2. We stream and map each result to a DTO, same as getAllDrivers().
