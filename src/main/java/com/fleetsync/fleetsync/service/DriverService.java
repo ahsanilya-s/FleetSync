@@ -93,7 +93,6 @@ public class DriverService {
     }
 
     /**
-     * Finds and returns a single driver by their database ID.
      *
      * Step-by-step:
      * 1. findById(id) queries the DB for a driver with that ID.
