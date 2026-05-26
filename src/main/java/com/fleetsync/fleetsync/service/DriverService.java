@@ -166,16 +166,7 @@ public class DriverService {
         // Hibernate will issue: UPDATE drivers SET is_active = false WHERE id = ?
     }
 
-    /**
-     * Private helper method that converts a Driver entity into a DriverResponseDto.
-     *
-     * Why do we need this?
-     * - We never expose raw JPA entities to the API layer — they contain sensitive fields,
-     *   lazy-loaded relationships, and internal DB details.
-     * - DTOs (Data Transfer Objects) are clean, flat objects with only what the client needs.
-     *
-     * This method is private because it's only used internally within this service class.
-     */
+
     private DriverResponseDto toDto(Driver driver) {
         return DriverResponseDto.builder()
                 .id(driver.getId())
