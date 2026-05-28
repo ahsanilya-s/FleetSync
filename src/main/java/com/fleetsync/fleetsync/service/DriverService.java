@@ -119,19 +119,6 @@ public class DriverService {
                 .toList();
     }
 
-    /**
-     * Updates an existing driver's details.
-     *
-     * Step-by-step:
-     * 1. Fetch the existing Driver from the DB — throw if not found.
-     * 2. Update only the fields that are allowed to change.
-     *    - Notice: we do NOT call driverRepository.save() here.
-     *    - Because the class is @Transactional, Hibernate tracks changes to managed entities.
-     *    - At the end of the transaction, Hibernate automatically detects what changed
-     *      (this is called "dirty checking") and issues an UPDATE SQL statement.
-     *    - Calling save() on an update is not wrong but unnecessary — dirty checking handles it.
-     * 3. Return the updated driver as a DTO.
-     */
     public DriverResponseDto updateDriver(Long id, DriverRequestDto req) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found with id: " + id));
