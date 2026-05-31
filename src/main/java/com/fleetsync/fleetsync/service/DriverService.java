@@ -133,18 +133,7 @@ public class DriverService {
         return toDto(driver);
     }
 
-    /**
-     * Soft-deletes a driver by setting isActive = false instead of removing the DB row.
-     *
-     * Why soft delete?
-     * - Hard deleting a driver who has past trips would break trip history records.
-     * - Setting isActive = false hides them from active listings while preserving history.
-     *
-     * Step-by-step:
-     * 1. Fetch the driver — throw if not found.
-     * 2. Set isActive to false.
-     * 3. Dirty checking handles the UPDATE automatically (no save() needed).
-     */
+
     public void deactivateDriver(Long id) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found with id: " + id));
