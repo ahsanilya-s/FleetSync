@@ -12,16 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * DriverService handles all business logic related to drivers.
- *
- * @Service  — tells Spring this is a service bean; Spring will create and manage its instance.
- * @Transactional — wraps every public method in a database transaction automatically.
- *                  If anything throws an exception, the transaction rolls back so no partial
- *                  data is saved to the database.
- * @RequiredArgsConstructor — Lombok generates a constructor that injects all 'final' fields.
- *                            This is the recommended way to do dependency injection in Spring.
- */
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -92,26 +83,14 @@ public class DriverService {
                 .toList();
     }
 
-    /**
-     *
-     * Step-by-step:
-     * 1. findById(id) queries the DB for a driver with that ID.
-     *    - It returns an Optional<Driver> — either the driver is there or it's empty.
-     * 2. orElseThrow() unwraps the Optional — if empty, it throws ResourceNotFoundException.
-     * 3. We convert the found Driver entity to a DriverResponseDto and return it.
-     */
+
     public DriverResponseDto getDriverById(Long id) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found with id: " + id));
         return toDto(driver);
     }
 
-    /**
-     * Returns only the drivers that are currently active (isActive = true).
-     * 1. findByIsActive(true) is a Spring Data JPA derived query — Spring auto-generates
-     *    the SQL: SELECT * FROM drivers WHERE is_active = true
-     * 2. We stream and map each result to a DTO, same as getAllDrivers().
-     */
+
     public List<DriverResponseDto> getActiveDrivers() {
         return driverRepository.findByIsActive(true)
                 .stream()
@@ -139,7 +118,6 @@ public class DriverService {
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found with id: " + id));
 
         driver.setIsActive(false);
-        // Hibernate will issue: UPDATE drivers SET is_active = false WHERE id = ?
     }
 
 
