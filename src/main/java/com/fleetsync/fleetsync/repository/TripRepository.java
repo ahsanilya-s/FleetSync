@@ -47,27 +47,9 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
      */
     Optional<Trip> findByVehicleId(Long vehicleId);
     
-    /**
-     * Find a trip by status.
-     * 
-     * Spring Data JPA generates query:
-     * SELECT * FROM trip WHERE status = ?
-     * 
-     * @param status the status of the trip (as String)
-     * @return Optional containing the trip if found, empty otherwise
-     */
+
     Optional<Trip> findByStatus(String status);
     
-    /**
-     * Find a trip by driver ID and status.
-     * 
-     * Useful for checking if a driver has an active trip.
-     * Spring Data JPA generates query:
-     * SELECT * FROM trip WHERE driver_id = ? AND status = ?
-     * 
-     * @param driverId the ID of the driver
-     * @param status the status of the trip (TripStatus enum)
-     * @return Optional containing the trip if found, empty otherwise
-     */
+
     Optional<Trip> findByDriverIdAndStatus(Long driverId, TripStatus status);
 }
