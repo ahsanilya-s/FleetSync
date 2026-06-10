@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 public class TripRequestDto {
-
+//purpose of this is origing
     @NotBlank(message = "Origin can not be Blank")
     private String origin;
 
