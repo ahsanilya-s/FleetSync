@@ -12,7 +12,7 @@ public class TripRequestDto {
 
     @NotBlank(message = "Destination can not be Blank")
     private String destination;
-
+//test comment for vehicle
     @NotNull(message = "Vehicle Id is required")
     private Long vehicleId;
 
